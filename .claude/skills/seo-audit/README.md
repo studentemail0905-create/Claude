@@ -2,7 +2,9 @@
 
 > A Claude skill for running systematic SEO audits and competitive analyses for local service businesses — built by [Southwell Media](https://southwellmedia.com).
 
-This skill gives Claude a repeatable methodology for auditing client websites and producing a client-ready PDF proposal.
+This skill gives Claude a repeatable methodology for auditing client websites and producing a client-ready interactive web report.
+
+> **Note:** this fork replaces the upstream PDF deliverable with a self-contained HTML report published as a Claude Artifact — explorable in the browser (sortable tables, jump nav) and printable to PDF from there if a static copy is ever needed. See `references/deliverables.md`.
 
 ---
 
@@ -10,7 +12,7 @@ This skill gives Claude a repeatable methodology for auditing client websites an
 
 One deliverable per audit:
 
-- **`[Client]_SEO_Audit.pdf`** — Full proposal with competitive analysis, keyword research, technical audit, content strategy, and prioritized quick wins. Light background, client brand colors applied as accents throughout.
+- **`[Client] SEO Audit`** — an interactive web report (Claude Artifact) with competitive analysis, keyword research, technical audit, content strategy, and prioritized quick wins. Client brand colors applied as accents throughout, real HTML tables the client can copy data out of, and a print stylesheet for exporting to PDF from the browser.
 
 ## What it covers
 
@@ -48,16 +50,15 @@ seo-audit/
     ├── b2b-multistate.md           # B2B multi-state methodology
     ├── technical-checklist.md      # Full technical SEO checklist
     ├── keywords.md                 # 4-tier keyword framework
-    └── deliverables.md             # PDF requirements and design guidance
+    └── deliverables.md             # Web report requirements and design guidance
 ```
 
 ---
 
 ## Requirements
 
-- Claude with computer use enabled (for browser recon and brand color extraction)
-- Python 3 with `reportlab` (`pip install reportlab`)
-- Canvas fonts from the [canvas-design skill](https://github.com/southwellmedia/canvas-design) at `/mnt/skills/examples/canvas-design/canvas-fonts/`
+- Claude with browser/computer use enabled (for live site recon and brand color extraction)
+- Access to the `Artifact` tool for publishing the report (no Python dependencies or external fonts required)
 
 ---
 
@@ -86,13 +87,13 @@ Classification happens before any research — getting this wrong invalidates th
 
 ## Key methodology notes
 
-**Hard blockers vs. quick wins** — The skill separates issues that prevent launch (placeholder phone numbers, dead CTAs, unblocked staging domains) from optimization opportunities. These are visually distinct in the PDF.
+**Hard blockers vs. quick wins** — The skill separates issues that prevent launch (placeholder phone numbers, dead CTAs, unblocked staging domains) from optimization opportunities. These are visually distinct in the report.
 
-**Brand color extraction** — Brand colors are pulled directly from the live site's CSS using browser JS, not guessed. The PDF always matches the client's actual palette.
+**Brand color extraction** — Brand colors are pulled directly from the live site's CSS using browser JS, not guessed. The report always matches the client's actual palette.
 
 **Strategic opportunities are specific** — The 3 opportunities section is grounded in actual competitive gaps found during research, not generic SEO advice. "Create great content" is never an output.
 
-**The audit is the pitch** — the closing section positions your agency to execute the implementation, not just deliver the report. The PDF uses your agency name on the cover and closing, pulled from your Claude memory or asked during intake.
+**The audit is the pitch** — the closing section positions your agency to execute the implementation, not just deliver the report. The report uses your agency name in the header and closing, pulled from your Claude memory or asked during intake.
 
 ---
 

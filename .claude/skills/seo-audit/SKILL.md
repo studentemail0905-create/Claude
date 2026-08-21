@@ -2,7 +2,7 @@
 name: seo-audit
 description: >
   Run a full SEO audit and competitive analysis for a client website, producing
-  a professional PDF proposal. Use this skill
+  an interactive web report published as a Claude Artifact. Use this skill
   whenever a user mentions "SEO audit", "audit this site", "competitive analysis
   for [client]", "SEO for [URL]", "how is [client] doing on SEO", or asks to
   analyze a client's online presence, keyword strategy, or search visibility.
@@ -10,7 +10,7 @@ description: >
   or "what's wrong with this site from an SEO standpoint." This skill covers
   the full workflow: live site recon, brand color extraction, competitor research,
   keyword categorization, technical audit, content strategy, quick wins, and
-  deliverable generation (PDF).
+  deliverable generation (interactive web report).
 ---
 
 # SEO Audit Skill
@@ -28,9 +28,9 @@ clear from context, skip that question — don't ask what you already know.
 
 **Do not proceed past Step 0 until you have: URL, city, and industry at minimum.**
 
-**Agency name** — used on the cover page and closing section of the PDF.
+**Agency name** — used in the report header and closing section.
 Check memory for the user's company name first. If not known, ask:
-"What's your agency or company name? This will appear on the cover page and closing."
+"What's your agency or company name? This will appear in the report header and closing."
 Store this as `agency_name` for use throughout the deliverable.
 
 ---
@@ -184,7 +184,7 @@ JSON.stringify(colors, null, 2);
 ```
 
 Record: primary color, secondary color, accent color, background, text color.
-These are required for the PDF deliverable.
+These are required for the report deliverable.
 
 ### 1c. What to document from recon
 
@@ -346,31 +346,31 @@ and what the client should build or publish to own it."
 
 One deliverable per audit:
 
-### Full PDF audit report
+### Interactive web report
 See `references/deliverables.md` for requirements and creative guidance.
 
+Build a single self-contained HTML file and publish it with the `Artifact` tool —
+no PDF generation, no external dependencies. The client explores the audit in their
+browser (sticky section nav, sortable/scannable tables) and can print it to PDF
+themselves later if they want a static copy.
+
 Sections (in order):
-1. Cover page (client name, brand colors, "Prepared by [agency_name]")
-2. Table of contents
-3. Executive summary with stat callout bar
-4. Business overview & site analysis
-5. Competitor analysis with feature matrix
-6. Keyword research tables by tier
-7. Technical SEO audit with PASS/WARN/FAIL ratings
-8. Content strategy (page roadmap + blog post list)
-9. Quick wins ranked list
-10. Strategic opportunities
-11. Closing / agency positioning
+1. Header (client name, brand colors, "Prepared by [agency_name]")
+2. Executive summary with stat tile row
+3. Business overview & site analysis
+4. Competitor analysis with feature matrix
+5. Keyword research tables by tier
+6. Technical SEO audit with PASS/WARN/FAIL ratings
+7. Content strategy (page roadmap + blog post list)
+8. Quick wins ranked list
+9. Strategic opportunities
+10. Closing / agency positioning
 
 ---
 
 ## Deliverable naming convention
 
-```
-[ClientName]_SEO_Audit.pdf
-```
-
-Goes to `/mnt/user-data/outputs/`.
+Artifact title: `[Client Name] SEO Audit`
 
 ---
 
