@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/skills/super-brain/scripts/hook_user_prompt_submit.py",
+            "timeout": 10,
+            "statusMessage": "Checking super-brain memory..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/skills/super-brain/scripts/hook_stop.py",
+            "timeout": 10,
+            "statusMessage": "super-brain: checking for anything worth remembering..."
+          }
+        ]
+      }
+    ]
+  }
+}
