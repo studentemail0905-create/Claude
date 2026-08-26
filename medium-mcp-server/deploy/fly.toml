@@ -1,0 +1,36 @@
+# Fly.io deployment config. Deploy with: fly launch --copy-config --no-deploy (first time), then fly deploy
+# Set secrets first: fly secrets set MEDIUM_INTEGRATION_TOKEN=... MCP_SERVER_AUTH_TOKEN=...
+app = "medium-mcp-server"
+primary_region = "iad"
+
+[build]
+
+[env]
+  NODE_ENV = "production"
+  MCP_TRANSPORT = "http"
+  MCP_HTTP_HOST = "0.0.0.0"
+  MCP_HTTP_PORT = "3000"
+  MEDIUM_ENABLE_READ_TOOLS = "true"
+  MEDIUM_ENABLE_WRITE_TOOLS = "true"
+  MEDIUM_ENABLE_PUBLISH_TOOL = "true"
+  LOG_LEVEL = "info"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/healthz"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256

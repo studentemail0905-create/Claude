@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "medium-mcp-server/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "medium-mcp-server/**"
+      - ".github/workflows/ci.yml"
+
+defaults:
+  run:
+    working-directory: medium-mcp-server
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: medium-mcp-server/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - run: npm run build
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: medium-mcp-server
+          push: false
+          tags: medium-mcp-server:ci

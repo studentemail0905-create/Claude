@@ -1,0 +1,32 @@
+# Render deployment config (https://render.com). Push this repo and choose
+# "New > Blueprint" in the Render dashboard, pointing at this file.
+services:
+  - type: web
+    name: medium-mcp-server
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MCP_TRANSPORT
+        value: http
+      - key: MCP_HTTP_HOST
+        value: 0.0.0.0
+      - key: MCP_HTTP_PORT
+        value: "3000"
+      - key: MEDIUM_ENABLE_READ_TOOLS
+        value: "true"
+      - key: MEDIUM_ENABLE_WRITE_TOOLS
+        value: "true"
+      - key: MEDIUM_ENABLE_PUBLISH_TOOL
+        value: "true"
+      - key: LOG_LEVEL
+        value: info
+      # Set these in the Render dashboard (Environment tab) instead of here,
+      # so they don't end up committed to source control:
+      - key: MEDIUM_INTEGRATION_TOKEN
+        sync: false
+      - key: MCP_SERVER_AUTH_TOKEN
+        sync: false

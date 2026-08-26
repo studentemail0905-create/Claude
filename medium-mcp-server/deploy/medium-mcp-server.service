@@ -1,0 +1,30 @@
+# systemd unit for running medium-mcp-server directly on a Linux host (no Docker).
+#
+# Install:
+#   sudo cp deploy/medium-mcp-server.service /etc/systemd/system/
+#   sudo mkdir -p /etc/medium-mcp-server && sudo cp .env /etc/medium-mcp-server/env
+#   sudo chmod 600 /etc/medium-mcp-server/env
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now medium-mcp-server
+
+[Unit]
+Description=Medium MCP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=medium-mcp
+Group=medium-mcp
+WorkingDirectory=/opt/medium-mcp-server
+EnvironmentFile=/etc/medium-mcp-server/env
+ExecStart=/usr/bin/node /opt/medium-mcp-server/dist/index.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

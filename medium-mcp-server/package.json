@@ -1,0 +1,41 @@
+{
+  "name": "medium-mcp-server",
+  "version": "1.0.0",
+  "description": "Remote MCP server for authenticated access to a Medium account: read publications and articles, draft posts, and publish with explicit two-step confirmation.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "dev:stdio": "MCP_TRANSPORT=stdio tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "lint": "tsc -p tsconfig.test.json"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "pino": "^10.3.1",
+    "rss-parser": "^3.13.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.10.2",
+    "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "pino-pretty": "^13.0.0",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
