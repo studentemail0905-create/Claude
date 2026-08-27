@@ -1,11 +1,33 @@
-# Render deployment config (https://render.com). Push this repo and choose
-# "New > Blueprint" in the Render dashboard, pointing at this file.
+# Render deployment config (https://render.com).
+#
+# This repo is a monorepo -- this service lives under medium-mcp-server/, not
+# at the repo root -- so dockerfilePath/dockerContext are spelled out
+# relative to the repo root (Render's rule for monorepo blueprints).
+#
+# Two ways to use this file:
+#   1. Blueprint (recommended if you want this file to be the source of
+#      truth): Render dashboard > New > Blueprint > connect this repo > when
+#      prompted for the Blueprint file, enter "medium-mcp-server/deploy/render.yaml"
+#      (Render supports non-root Blueprint paths). Render provisions the
+#      service from this file directly.
+#   2. Plain Web Service (simpler, no blueprint discovery to get right):
+#      Render dashboard > New > Web Service > connect this repo > set
+#      "Root Directory" to "medium-mcp-server" > Runtime: Docker (Render
+#      auto-detects ./Dockerfile under that root). Then add the env vars
+#      below by hand in the dashboard's Environment tab; this file is only
+#      documentation in that path.
+#
+# `plan: free` costs nothing and needs no credit card, but Render spins the
+# service down after 15 minutes idle (~1 minute cold start on the next
+# request). Switch to `plan: starter` (~$7/mo) for an always-on instance if
+# that cold start is a problem for your MCP client.
 services:
   - type: web
     name: medium-mcp-server
     runtime: docker
-    dockerfilePath: ./Dockerfile
-    plan: starter
+    dockerfilePath: medium-mcp-server/Dockerfile
+    dockerContext: medium-mcp-server
+    plan: free
     healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
@@ -14,8 +36,11 @@ services:
         value: http
       - key: MCP_HTTP_HOST
         value: 0.0.0.0
+      # Render's own reverse proxy always forwards to the port named by its
+      # PORT env var (default 10000), regardless of Dockerfile EXPOSE -- so
+      # this must match, not be an arbitrary app-side port like 3000.
       - key: MCP_HTTP_PORT
-        value: "3000"
+        value: "10000"
       - key: MEDIUM_ENABLE_READ_TOOLS
         value: "true"
       - key: MEDIUM_ENABLE_WRITE_TOOLS
