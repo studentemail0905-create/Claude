@@ -1,0 +1,26 @@
+{
+  "name": "no-clearance",
+  "private": true,
+  "version": "0.1.0",
+  "description": "NO CLEARANCE — a brutally unforgiving first-person sci-fi flight simulator about illegally escaping a heavily controlled planet.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "sim": "vite-node scripts/botflight.ts"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/three": "^0.186.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6",
+    "vite-node": "^3.2.4",
+    "vitest": "^3.2.7"
+  }
+}
