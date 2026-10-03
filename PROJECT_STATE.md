@@ -9,9 +9,11 @@ This file exists so another context can continue without rediscovering the proje
 npm install
 npm run dev          # http://localhost:5173  (add ?debug=1 for the dev panel, F1 toggles it)
 npm run build        # tsc --noEmit && static build in dist/
-npm test             # vitest: 21 unit/integration tests incl. a full scripted escape
+npm test             # vitest: 27 unit/integration tests incl. a full scripted escape and no-stage-gating checks
 npm run sim -- 1 2 3 # headless BotPilot flights for the given hex seeds (balance check)
-node scripts/qa.mjs menu|fly|bot   # Playwright/Chromium (SwiftShader) screenshots → qa-shots/
+URL=http://localhost:4173/?debug=1 TS=25 SEED=00000001 node scripts/qa.mjs bot   # Playwright/Chromium (SwiftShader) flight + screenshots → qa-shots/
+node scripts/qa-fail.mjs | scripts/qa-ui.mjs                                       # failure/restart flow, menu screens
+# Run browser QA against `npx vite preview` (port 4173), not the dev server: HMR reloads kill long runs.
 ```
 
 `?debug=1&bot=1` starts every run with the scripted BotPilot flying the real cockpit inputs.
@@ -48,8 +50,24 @@ node scripts/qa.mjs menu|fly|bot   # Playwright/Chromium (SwiftShader) screensho
 
 ## Verified behaviour
 
-- `npm test` green (21 tests): RNG determinism, atmosphere anchors, gravity, hydraulics, electrical overload trip, nav-computer power loss, crossfeed, jammer duration window per seed, gear-up-on-runway collapse, jump probability curve, transponder suspicion, ≥30 events + repeat protection, save migration/corruption, reward/pity, deterministic replay, full escape by BotPilot.
+- Browser (production build, headless Chromium/SwiftShader): menu → FLY → full BotPilot flight → separation → space → jump → ESCAPE CONFIRMED results for seed 00000001 in 5:52.47, bit-identical to the headless sim. Failure screen + instant restart (R) verified. Settings / records / black market screens verified. No page errors.
+- `npm test` green (27 tests): RNG determinism, atmosphere anchors, gravity, hydraulics, electrical overload trip, nav-computer power loss, crossfeed, jammer duration window per seed, gear-up-on-runway collapse, jump probability curve, transponder suspicion, ≥30 events + repeat protection, save migration/corruption, reward/pity, deterministic replay, full escape by BotPilot.
 - Bot batch (20 seeds): 18 escapes, 2 legitimate systemic deaths (sideslip breakup after early separation, coil failure on roll).
+
+## Cockpit controls (≈90 bound inputs + 12 breakers; ids in `ship/Controls.ts`)
+
+Overhead: BATTERY, EXT PWR, APU (OFF/ON/START), GEN A/B, BUS TIE, AVIONICS, CABIN BUS, JUMP BUS (guard), HYD PUMP A/B, PRESS MODE, PILOT O2, COCKPIT SEAL, CABIN ISOL.
+Glareshield: MASTER CAUTION/WARNING, FLT DIR, NAV SOURCE (LEGAL/INS/ESCAPE), ROUTE MKR, AUTOPILOT, FCS MODE, STAB AUG, THRUST VEC, HUD BRT.
+Left wing: LANDING GEAR (+3 lamps, WOW), PARK BRK, COOL A/B, COOL PRIO, FIRE A/B pull handles.
+Left console: THROTTLE A/B, SPD BRK, THRUST LIMIT (GEN/60/85/100/110), ENG MASTER, START A/B; FUEL: PUMP A/B, XFEED, ISOL A/B, XFER, SVC LINE (guard).
+Right wing (evac): RESTRAINT CMD, POD PWR, POD GUID, RETURN PROG, EVAC ARM (guard), POD RELEASE (guard), capsule/CLEAR lamps.
+Right console: COMMS, TX, FREQ, RX VOL, ACK/PTT, IDENT, XPDR (OFF/STBY/ON/ALT/SECURE), AUTH DLINK (guard), AUTH digit, AUTH TX; NAV COMP, ESC LOAD, JUMP SOLVE, RCS, RCS MODE, PITCH TRIM wheel, YAW TRIM.
+Lower centre: SEPARATION (UMBILICAL, MECH LOCKS guard, SEP CHARGES guard, EMERGENCY SEPARATION guarded pull) and JUMP DRIVE box (CAP CHG, COILS guard, SYNC, CAP DUMP, SAFETY pull pin, JUMP guard).
+Right wall: SIGNAL MASKING UNIT (BUS, COOL, CHG, FIELD PROFILE, DECOY, ARM guard, ENGAGE, OVERDRIVE guard) and 12 circuit breakers. Left wall: kneeboard (callsign, squawk, authentication table — regenerated per run).
+
+## Events (31)
+
+Interceptor, Missile Lock, Inspection Drone, Unknown Contact, Debris Field, Jammer Overheat, Engine Flameout, Coolant Leak, Capacitor Arc, Micrometeor, Solar Flare, Transponder Reboot, Reactor Surge, Throttle Jam, Control Calibration, Avionics Bus Failure, Radar Ghosts, Engine Oscillation, Fuel Imbalance, Jump Coil Quench, Jump Clock Desync, Hydraulic Leak, Navigation Spoof, False Clearance, Government Challenge, Forced Software Update, Autopilot Intervention, Passenger PA Broadcast, Mechanical Obstruction, Coffee Failure, Orbital Toll Authority.
 
 ## Known issues / next priorities
 
