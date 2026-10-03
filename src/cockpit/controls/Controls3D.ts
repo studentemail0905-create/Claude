@@ -27,6 +27,11 @@ const G = {
 };
 
 export type DragMode = 'none' | 'x' | 'y';
+export interface KeyHint {
+  key: string;
+  mouse: string;
+  action: string;
+}
 
 /** Base physical control bound to one ControlState id. */
 export abstract class Control3D {
@@ -69,6 +74,52 @@ export abstract class Control3D {
     const v = cs.get(this.id);
     const pos = this.def.positions ? this.def.positions[v] : this.def.kind === 'knob' || this.def.kind === 'lever' ? `${Math.round(v * 100)}%` : '';
     return pos ? `${this.def.label} — ${pos}` : this.def.label;
+  }
+
+  /** Keyboard prompts for the hover readout: key, mouse equivalent, what it does now. */
+  hints(cs: ControlState): KeyHint[] {
+    const d = this.def;
+    if (!d) return [];
+    const v = cs.get(this.id);
+    const pos = d.positions;
+    switch (d.kind) {
+      case 'toggle':
+        if (pos!.length === 2) return [{ key: 'G', mouse: 'LMB', action: `→ ${pos![v ? 0 : 1]}` }];
+        return [
+          ...(v < pos!.length - 1 ? [{ key: 'G', mouse: 'LMB', action: `→ ${pos![v + 1]}` }] : []),
+          ...(v > 0 ? [{ key: 'H', mouse: 'RMB', action: `→ ${pos![v - 1]}` }] : []),
+        ];
+      case 'rotary':
+        return [
+          ...(v < pos!.length - 1 ? [{ key: 'V', mouse: 'LMB', action: `→ ${pos![v + 1]}` }] : []),
+          ...(v > 0 ? [{ key: 'C', mouse: 'RMB', action: `→ ${pos![v - 1]}` }] : []),
+        ];
+      case 'guard':
+        return [{ key: 'G', mouse: 'LMB', action: v ? 'close guard' : 'open guard' }];
+      case 'button':
+        return [{ key: 'G', mouse: 'LMB', action: 'press' }];
+      case 'latch':
+        return [{ key: 'G', mouse: 'LMB', action: v ? 'push → off' : 'push → on' }];
+      case 'knob':
+      case 'lever':
+        return [{ key: 'V', mouse: 'drag/wheel', action: 'increase' }, { key: 'C', mouse: 'drag/wheel', action: 'decrease' }];
+      case 'pull':
+        return v ? [{ key: 'H', mouse: 'RMB', action: 'stow' }] : [{ key: 'G', mouse: 'drag ↓', action: 'pull' }];
+      case 'breaker':
+        return [{ key: 'G', mouse: 'LMB', action: v ? 'pull breaker' : 'reset breaker' }];
+      case 'stick':
+        return [{ key: 'G', mouse: 'LMB', action: 'grab stick' }];
+    }
+    return [];
+  }
+
+  /** Keyboard actuation of the hovered control. Returns true if it physically moved. */
+  keyAct(k: 'op' | 'rev' | 'inc' | 'dec', cs: ControlState): boolean {
+    const kind = this.def?.kind;
+    if (k === 'inc' || k === 'dec') return this.wheel(k === 'inc' ? 1 : -1, cs);
+    if (kind === 'pull') return cs.set(this.id, k === 'op' ? 1 : 0);
+    if (kind === 'knob' || kind === 'lever') return this.wheel(k === 'op' ? 1 : -1, cs);
+    return this.click(k === 'op' ? 0 : 2, cs);
   }
 
   /** Primary (LMB) / secondary (RMB) click. Return true if something physically moved. */
@@ -321,6 +372,9 @@ export class TrimWheel3D extends Control3D {
   click(btn: number, cs: ControlState): boolean {
     return this.wheel(btn === 2 ? -1 : 1, cs);
   }
+  hints(): KeyHint[] {
+    return [{ key: 'V', mouse: 'drag/wheel', action: 'nose up' }, { key: 'C', mouse: 'drag/wheel', action: 'nose down' }];
+  }
   label(cs: ControlState): string {
     const v = (cs.get(this.id) - 0.5) * 2;
     return `${this.def.label} — ${v > 0.01 ? 'NOSE UP ' : v < -0.01 ? 'NOSE DN ' : ''}${Math.abs(v * 100).toFixed(0)}%`;
@@ -411,7 +465,7 @@ export class Pull3D extends Control3D {
     }
   }
   label(cs: ControlState): string {
-    return `${this.def.label} — ${cs.get(this.id) ? 'PULLED' : 'STOWED'} (drag to ${cs.get(this.id) ? 'stow' : 'pull'})`;
+    return `${this.def.label} — ${cs.get(this.id) ? 'PULLED' : 'STOWED'}`;
   }
   sync(cs: ControlState, _s: Ship, dt: number): void {
     const t = cs.get(this.id) ? 1 : 0;

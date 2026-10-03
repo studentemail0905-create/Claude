@@ -155,7 +155,10 @@ export class Game {
     };
 
     this.ui = new UI(document.getElementById('ui')!, this.save, {
-      onFly: (seed) => this.startRun(seed),
+      onFly: (seed) => {
+        this.audio.start();
+        this.ui.showBriefing(() => this.startRun(seed));
+      },
       onResume: () => this.resume(),
       onRestart: () => this.startRun(),
       onMenu: () => this.toMenu(),
@@ -374,6 +377,7 @@ export class Game {
         pb: this.save.data.personalBest,
         runNo: this.runNo,
         tooltip: this.save.data.settings.tooltips ? this.interaction.tooltip : '',
+        hints: this.interaction.hints,
         hovering: !!this.interaction.hovered,
         stick: this.interaction.stickGrabbed,
         locked: this.input.locked || this.input.free,

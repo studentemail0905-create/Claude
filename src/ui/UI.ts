@@ -7,6 +7,65 @@ import type { Run } from '../core/Run';
 
 type Summary = ReturnType<Run['summary']>;
 
+
+const KEY_GROUPS: { title: string; rows: [string, string][] }[] = [
+  {
+    title: 'LOOK & OPERATE CONTROLS',
+    rows: [
+      ['Mouse', 'Look around the cockpit (your head)'],
+      ['Centre dot', 'Aim at a switch, knob, lever or handle — its name and keys appear under the dot'],
+      ['G  or  Left click', 'Operate: flip a switch, press a button, open a guard, pull a handle, grab the stick'],
+      ['H  or  Right click', 'Reverse: flip a switch back, stow a handle, previous knob position'],
+      ['V / C  or  drag / wheel', 'Increase / decrease a knob, lever, throttle or trim (hold to keep turning)'],
+      ['Mouse wheel', 'On a control: turn it · on nothing: zoom'],
+      ['Z  or  Middle click', 'Zoom view in / out'],
+      ['Space', 'Recentre view (and let go of the stick)'],
+    ],
+  },
+  {
+    title: 'FLYING',
+    rows: [
+      ['G or click on stick', 'Take hold of the stick — the mouse then flies the ship'],
+      ['Left click / T', 'Let go of the stick'],
+      ['Hold Right click', 'Look around while holding the stick'],
+      ['W / S  or  ↑ / ↓', 'Pitch nose down / up'],
+      ['A / D  or  ← / →', 'Roll left / right'],
+      ['Q / E', 'Rudder (and nose-wheel steering on the runway)'],
+      ['R / F', 'Throttle both engines up / down'],
+      ['B (hold)', 'Wheel brakes'],
+    ],
+  },
+  {
+    title: 'SPACE (needs RCS on, mode ROT+TRN)',
+    rows: [
+      ['I / K', 'Translate forward / back'],
+      ['J / L', 'Translate left / right'],
+      ['U / O', 'Translate up / down'],
+    ],
+  },
+  {
+    title: 'GAME',
+    rows: [
+      ['Esc  or  P', 'Pause (this screen is in the pause menu too)'],
+      ['R  or  Enter', 'Restart after a run ends'],
+      ['Gamepad', 'Left stick flies, right stick X rudder, triggers throttle'],
+    ],
+  },
+];
+
+const PANEL_MAP: [string, string][] = [
+  ['Overhead (look up)', 'Battery, ground power, APU, generators, buses, hydraulic pumps, pressurisation, oxygen'],
+  ['Glareshield (top of dash)', 'Master caution / warning, flight director, nav source, autopilot, FCS mode, stability'],
+  ['Main dash', 'Flight, navigation, propulsion and systems displays; warning lights strip'],
+  ['Left of dash', 'Landing gear, park brake, coolant, engine fire handles'],
+  ['Left console', 'Throttles, thrust limit, speed brake, engine master + start buttons, fuel panel'],
+  ['Right of dash', 'Passenger evacuation capsules'],
+  ['Right console', 'Radio, transponder, datalink, authentication, nav computer, RCS, trim'],
+  ['Below dash', 'Module separation (left) and jump drive (right)'],
+  ['Right wall', 'Signal masking unit (jammer) and circuit breakers'],
+  ['Left wall', 'Flight card: callsign, squawk code, authentication table'],
+];
+
 export interface UIHandlers {
   onFly: (seed?: string) => void;
   onResume: () => void;
@@ -34,12 +93,15 @@ export class UI {
   private lockPrompt: HTMLElement;
   private stickTag: HTMLElement;
   private settingsReturn: 'menu' | 'pause' = 'menu';
+  private tipName!: HTMLElement;
+  private tipKeys!: HTMLElement;
+  private lastHints = '';
 
   constructor(private root: HTMLElement, private save: SaveManager, private on: UIHandlers) {
     this.hud = h(`<div class="flight-hud hidden">
       <div class="timer"></div>
       <div class="reticle"></div>
-      <div class="tip"></div>
+      <div class="tip"><div class="tip-name"></div><div class="tip-keys"></div></div>
       <div class="stick-tag">HAND ON STICK · LMB release · hold RMB to look</div>
       <div class="lock-prompt">CLICK TO TAKE CONTROL</div>
       <div class="subs"></div>
@@ -51,7 +113,9 @@ export class UI {
     this.subs = this.hud.querySelector('.subs')!;
     this.lockPrompt = this.hud.querySelector('.lock-prompt')!;
     this.stickTag = this.hud.querySelector('.stick-tag')!;
-    for (const k of ['menu', 'pause', 'failure', 'results', 'settings', 'records', 'market']) {
+    this.tipName = this.hud.querySelector('.tip-name')!;
+    this.tipKeys = this.hud.querySelector('.tip-keys')!;
+    for (const k of ['menu', 'pause', 'failure', 'results', 'settings', 'records', 'market', 'briefing']) {
       const el = h(`<div class="screen hidden screen-${k}"></div>`);
       root.appendChild(el);
       this.screens[k] = el;
@@ -106,10 +170,17 @@ export class UI {
     this.reticle.className = 'reticle ' + this.save.data.cosmetics.reticle;
   }
 
-  updateFlight(s: { time: number; pb: number | null; runNo: number; tooltip: string; hovering: boolean; stick: boolean; locked: boolean; free?: boolean }): void {
+  updateFlight(s: { time: number; pb: number | null; runNo: number; tooltip: string; hints?: { key: string; mouse: string; action: string }[]; hovering: boolean; stick: boolean; locked: boolean; free?: boolean }): void {
     this.hud.classList.toggle('free-cursor', !!s.free);
     this.timer.textContent = `RUN ${fmtTime(s.time)}   PB ${s.pb !== null ? fmtTime(s.pb) : '--:--.--'}   #${s.runNo}`;
-    this.tip.textContent = s.tooltip;
+    if (this.tipName.textContent !== s.tooltip) this.tipName.textContent = s.tooltip;
+    const hk = s.tooltip ? (s.hints ?? []).map((h) => `${h.key}|${h.mouse}|${h.action}`).join('#') : '';
+    if (hk !== this.lastHints) {
+      this.lastHints = hk;
+      this.tipKeys.innerHTML = (s.tooltip ? s.hints ?? [] : [])
+        .map((h) => `<span class="chip"><kbd>${esc(h.key)}</kbd><i>${esc(h.mouse)}</i>${esc(h.action)}</span>`)
+        .join('');
+    }
     this.reticle.classList.toggle('hover', s.hovering);
     this.stickTag.style.display = s.stick ? 'block' : 'none';
     this.lockPrompt.style.display = s.locked ? 'none' : 'block';
@@ -133,6 +204,7 @@ export class UI {
         <div class="sub-title">Physics and timers are frozen. The government is patient.</div>
         <div class="menu-buttons">
           <button data-a="resume" class="primary">RESUME</button>
+          <button data-a="controls">CONTROLS</button>
           <button data-a="restart">RESTART RUN</button>
           <button data-a="settings">SETTINGS</button>
           <button data-a="menu">EXIT TO MENU</button>
@@ -140,15 +212,57 @@ export class UI {
         <div class="inputs">
           <div><b>MOUSE</b> look · <b>LMB</b> operate / drag levers, knobs, handles · <b>RMB</b> reverse a switch · <b>WHEEL</b> rotate knob / zoom · <b>MMB/Z</b> zoom</div>
           <div><b>STICK</b> click it to take hold, mouse deflects, LMB releases, hold RMB to look · or <b>W A S D</b></div>
+          <div><b>G</b> operate · <b>H</b> reverse · <b>V / C</b> increase / decrease the control under the dot</div>
           <div><b>NO POINTER LOCK?</b> the cursor aims at controls; drag empty space to look · <b>P</b> or <b>Esc</b> pauses</div>
           <div><b>Q/E</b> rudder · <b>R/F</b> throttle · <b>B</b> wheel brake · <b>I K J L U O</b> RCS translate · <b>SPACE</b> recentre view</div>
         </div>
       </div>`;
     el.querySelector('[data-a=resume]')!.addEventListener('click', () => this.on.onResume());
     el.querySelector('[data-a=restart]')!.addEventListener('click', () => this.on.onRestart());
+    el.querySelector('[data-a=controls]')!.addEventListener('click', () => this.showBriefing(() => this.showPause(), 'BACK'));
     el.querySelector('[data-a=settings]')!.addEventListener('click', () => this.showSettings('pause'));
     el.querySelector('[data-a=menu]')!.addEventListener('click', () => this.on.onMenu());
     this.show('pause');
+  }
+
+  // ── controls briefing ─────────────────────────────────
+  /** Controls reference. Shown after FLY (before the cockpit) and from the pause menu. */
+  showBriefing(onGo: () => void, goLabel = 'TAKE CONTROL'): void {
+    this.hud.classList.add('hidden');
+    const el = this.screens.briefing;
+    const groups = KEY_GROUPS.map(
+      (g) => `<section><h3>${esc(g.title)}</h3>${g.rows.map(([k, d]) => `<div class="krow"><span class="keys">${k.split('  ').map((part) => (part === 'or' ? '<span class="or">or</span>' : `<kbd>${esc(part)}</kbd>`)).join('')}</span><span class="kdesc">${esc(d)}</span></div>`).join('')}</section>`,
+    ).join('');
+    const map = PANEL_MAP.map(([w, d]) => `<div class="krow"><span class="where">${esc(w)}</span><span class="kdesc">${esc(d)}</span></div>`).join('');
+    el.innerHTML = `
+      <div class="panel-box briefing">
+        <div class="authority">PRE-FLIGHT BRIEFING · PCFA FORM 7-C · CONTROLS</div>
+        <h2>CONTROLS</h2>
+        <div class="sub-title">Aim the centre dot at anything in the cockpit: its name and the key to operate it appear under the dot.</div>
+        <div class="kgrid">${groups}</div>
+        <section class="pmap"><h3>WHERE THINGS ARE</h3>${map}</section>
+        <div class="menu-buttons row">
+          <button data-a="go" class="primary">${esc(goLabel)}  [ENTER]</button>
+          ${goLabel === 'TAKE CONTROL' ? '<button data-a="back">BACK</button>' : ''}
+        </div>
+      </div>`;
+    const go = () => {
+      window.removeEventListener('keydown', onKey);
+      onGo();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Enter' && !el.classList.contains('hidden')) {
+        e.preventDefault();
+        go();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    el.querySelector('[data-a=go]')!.addEventListener('click', go);
+    el.querySelector('[data-a=back]')?.addEventListener('click', () => {
+      window.removeEventListener('keydown', onKey);
+      this.showMenu();
+    });
+    this.show('briefing');
   }
 
   // ── failure / results ─────────────────────────────────

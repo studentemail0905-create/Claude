@@ -54,6 +54,10 @@ node scripts/qa-fail.mjs | scripts/qa-ui.mjs                                    
 - `npm test` green (27 tests): RNG determinism, atmosphere anchors, gravity, hydraulics, electrical overload trip, nav-computer power loss, crossfeed, jammer duration window per seed, gear-up-on-runway collapse, jump probability curve, transponder suspicion, ≥30 events + repeat protection, save migration/corruption, reward/pity, deterministic replay, full escape by BotPilot.
 - Bot batch (20 seeds): 18 escapes, 2 legitimate systemic deaths (sideslip breakup after early separation, coil failure on roll).
 
+## Controls UX
+
+FLY opens a controls briefing (`UI.showBriefing`, also in the pause menu). Aiming at any control shows its name/state plus key chips (`Control3D.hints`). Keyboard actuation of the hovered control: **G** operate, **H** reverse, **V/C** increase/decrease (hold to repeat) — `InteractionManager` + `Control3D.keyAct`. The brief said "no tutorial"; the user later asked for this screen and these prompts explicitly.
+
 ## Cockpit controls (≈90 bound inputs + 12 breakers; ids in `ship/Controls.ts`)
 
 Overhead: BATTERY, EXT PWR, APU (OFF/ON/START), GEN A/B, BUS TIE, AVIONICS, CABIN BUS, JUMP BUS (guard), HYD PUMP A/B, PRESS MODE, PILOT O2, COCKPIT SEAL, CABIN ISOL.

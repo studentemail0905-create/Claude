@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { Input } from '../core/Input';
 import type { Cockpit } from './Cockpit';
-import type { Control3D } from './controls/Controls3D';
+import type { Control3D, KeyHint } from './controls/Controls3D';
 import type { Run } from '../core/Run';
 import { clamp, DEG } from '../core/mathutil';
 import type { Settings } from '../core/SaveManager';
@@ -20,6 +20,9 @@ export class InteractionManager {
   private ray = new THREE.Raycaster();
   private center = new THREE.Vector2(0, 0);
   tooltip = '';
+  hints: KeyHint[] = [];
+  private keyHeld: Control3D | null = null;
+  private adjustT = 0;
   onControl: (c: Control3D, kind: string) => void = () => {};
   private kbStick = { p: 0, r: 0 };
   /** Free-cursor mode: head turns only while dragging empty space. */
@@ -149,6 +152,42 @@ export class InteractionManager {
       }
       if (key === 'KeyZ') this.zoom = this.zoom > 1.2 ? 1 : 2.4;
       if (key === 'KeyT') this.stickGrabbed = !this.stickGrabbed;
+      // keyboard interaction with whatever the reticle is on
+      const h = this.hovered;
+      if (h && !this.dragging && (key === 'KeyG' || key === 'KeyH')) {
+        if (h === this.cockpit.stick) {
+          if (key === 'KeyG') {
+            this.stickGrabbed = true;
+            this.onControl(h, 'stick_grab');
+          }
+        } else {
+          const moved = h.keyAct(key === 'KeyG' ? 'op' : 'rev', cs);
+          if (moved) this.onControl(h, h.def.kind);
+          else if (cs.stuck.has(h.id)) this.onControl(h, 'stuck');
+          if (key === 'KeyG' && h.def.kind === 'button') this.keyHeld = h;
+        }
+      }
+      if (h && h !== this.cockpit.stick && (key === 'KeyC' || key === 'KeyV')) {
+        if (h.keyAct(key === 'KeyV' ? 'inc' : 'dec', cs)) this.onControl(h, h.def.kind);
+        else if (cs.stuck.has(h.id)) this.onControl(h, 'stuck');
+        this.adjustT = -0.35; // hold to keep adjusting after a short delay
+      }
+    }
+
+    // momentary buttons pressed with G release when G is released
+    if (this.keyHeld && !input.down('KeyG')) {
+      this.keyHeld.release(cs);
+      this.keyHeld = null;
+    }
+    // hold C / V to keep turning a knob or moving a lever
+    const adj = (input.down('KeyV') ? 1 : 0) - (input.down('KeyC') ? 1 : 0);
+    if (adj !== 0 && this.hovered && this.hovered !== this.cockpit.stick) {
+      this.adjustT += dt;
+      if (this.adjustT > 0.07) {
+        this.adjustT = 0;
+        const kind = this.hovered.def.kind;
+        if (kind === 'knob' || kind === 'lever') this.hovered.keyAct(adj > 0 ? 'inc' : 'dec', cs);
+      }
     }
 
     // gamepad (optional): left stick = stick, right X = pedals, triggers = throttle
@@ -183,5 +222,6 @@ export class InteractionManager {
     }
     const show = this.dragging ?? (this.stickGrabbed ? this.cockpit.stick : this.hovered);
     this.tooltip = show ? show.label(cs) + (cs.stuck.has(show.id) ? '  [JAMMED]' : '') : '';
+    this.hints = show && !this.stickGrabbed && !this.dragging ? show.hints(cs) : this.stickGrabbed ? [{ key: 'LMB', mouse: 'T / Space', action: 'release stick' }, { key: 'RMB', mouse: 'hold', action: 'look around' }] : [];
   }
 }
