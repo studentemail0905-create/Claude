@@ -45,6 +45,7 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'reticle_dot', name: 'Reticle: Dot', kind: 'reticle', cost: 0 },
   { id: 'reticle_cross', name: 'Reticle: Crosshair', kind: 'reticle', cost: 25 },
   { id: 'reticle_ring', name: 'Reticle: Ring', kind: 'reticle', cost: 25 },
+  { id: 'warn_green', name: 'Displays: Regulation Green CRT', kind: 'warning', cost: 0 },
   { id: 'warn_amber', name: 'Displays: Amber CRT', kind: 'warning', cost: 50 },
   { id: 'warn_white', name: 'Displays: Mono White CRT', kind: 'warning', cost: 50 },
   { id: 'snark_ministry', name: 'Snark Pack: Ministry of Paperwork', kind: 'snark', cost: 80 },
