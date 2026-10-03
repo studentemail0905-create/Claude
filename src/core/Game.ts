@@ -167,7 +167,7 @@ export class Game {
     if (debug) this.debug = new DebugPanel(this);
 
     document.addEventListener('pointerlockchange', () => {
-      if (!document.pointerLockElement && this.state === 'flying') this.pause();
+      if (!document.pointerLockElement && this.state === 'flying' && !this.input.free) this.pause();
     });
     r.domElement.addEventListener('click', () => {
       if (this.state === 'flying' && !this.input.locked) this.input.requestLock();
@@ -175,9 +175,8 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       if (e.code === 'KeyR' && (this.state === 'ended') ) this.startRun();
       if (e.code === 'Enter' && this.state === 'ended') this.startRun();
-      if (e.code === 'Escape' && this.state === 'paused') {
-        /* handled by UI buttons */
-      }
+      if (e.code === 'Escape' && this.state === 'flying' && this.input.free) this.pause();
+      if (e.code === 'KeyP' && this.state === 'flying') this.pause();
       if (e.code === 'F1' && this.debug) {
         e.preventDefault();
         this.debug.toggle();
@@ -377,7 +376,8 @@ export class Game {
         tooltip: this.save.data.settings.tooltips ? this.interaction.tooltip : '',
         hovering: !!this.interaction.hovered,
         stick: this.interaction.stickGrabbed,
-        locked: this.input.locked,
+        locked: this.input.locked || this.input.free,
+        free: this.input.free && !this.input.locked,
       });
     }
   }

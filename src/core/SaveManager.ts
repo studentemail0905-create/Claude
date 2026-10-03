@@ -93,11 +93,23 @@ export function migrate(raw: any): SaveData {
   return out;
 }
 
+function safeStorage(): Storage | null {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const k = '__nc_probe';
+    localStorage.setItem(k, '1');
+    localStorage.removeItem(k);
+    return localStorage;
+  } catch {
+    return null; // blocked storage (private window, sandboxed frame): play without saving
+  }
+}
+
 export class SaveManager {
   data: SaveData;
   recovered = false;
 
-  constructor(private storage: Storage | null = typeof localStorage !== 'undefined' ? localStorage : null) {
+  constructor(private storage: Storage | null = safeStorage()) {
     this.data = this.load();
   }
 

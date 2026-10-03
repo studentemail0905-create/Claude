@@ -22,6 +22,8 @@ export class InteractionManager {
   tooltip = '';
   onControl: (c: Control3D, kind: string) => void = () => {};
   private kbStick = { p: 0, r: 0 };
+  /** Free-cursor mode: head turns only while dragging empty space. */
+  private freeLook = false;
 
   constructor(private input: Input, private cockpit: Cockpit, public camera: THREE.PerspectiveCamera) {
     this.ray.far = 2.2;
@@ -55,6 +57,8 @@ export class InteractionManager {
         if (this.stickGrabbed) {
           this.stickGrabbed = false;
           this.onControl(this.cockpit.stick, 'stick_release');
+        } else if (!this.hovered && input.free) {
+          this.freeLook = true;
         } else if (this.hovered) {
           const h = this.hovered;
           if (h === this.cockpit.stick) {
@@ -68,6 +72,7 @@ export class InteractionManager {
           }
         }
       } else if (b === 2) {
+        if (!this.hovered && input.free) this.freeLook = true;
         if (!this.stickGrabbed && this.hovered && this.hovered !== this.cockpit.stick) {
           const moved = this.hovered.click(2, cs);
           if (moved) this.onControl(this.hovered, this.hovered.def.kind);
@@ -78,6 +83,7 @@ export class InteractionManager {
       }
     }
     for (const b of input.takeUps()) {
+      if (b === 0 || b === 2) this.freeLook = false;
       if (b === 0 && this.dragging) {
         this.dragging.release(cs);
         this.dragging = null;
@@ -93,7 +99,7 @@ export class InteractionManager {
     } else if (this.stickGrabbed && !lookHeld) {
       cs.stickRoll = clamp(cs.stickRoll + mdx * 0.0042 * settings.sensitivity, -1, 1);
       cs.stickPitch = clamp(cs.stickPitch + mdy * 0.0042 * settings.sensitivity * inv, -1, 1);
-    } else {
+    } else if (!input.free || input.locked || this.freeLook) {
       this.yaw -= mdx * sens;
       this.pitch -= mdy * sens * inv;
     }
@@ -164,6 +170,8 @@ export class InteractionManager {
 
     // gaze raycast (not while dragging or flying the stick)
     if (!this.dragging && !(this.stickGrabbed && !lookHeld)) {
+      if (input.free && !input.locked && !this.freeLook) this.center.set(input.mx, input.my);
+      else this.center.set(0, 0);
       this.ray.setFromCamera(this.center, this.camera);
       const hits = this.ray.intersectObjects(this.cockpit.hitMeshes, false);
       const c = hits.length ? (hits[0].object.userData.control as Control3D) : null;

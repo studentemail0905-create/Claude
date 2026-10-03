@@ -6,6 +6,10 @@ export class Input {
   wheel = 0;
   buttons = new Set<number>();
   locked = false;
+  /** Pointer lock unavailable/denied: the cursor stays visible and aims at controls. */
+  free = false;
+  mx = 0;
+  my = 0;
   private lockedAt = 0;
   private downQueue: number[] = [];
   private upQueue: number[] = [];
@@ -24,6 +28,14 @@ export class Input {
       this.buttons.clear();
     });
     el.addEventListener('mousemove', (e) => {
+      const r = el.getBoundingClientRect();
+      this.mx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      this.my = -(((e.clientY - r.top) / r.height) * 2 - 1);
+      if (this.free && !this.locked) {
+        this.dx += e.movementX;
+        this.dy += e.movementY;
+        return;
+      }
       if (!this.locked || performance.now() - this.lockedAt < 120) return;
       // browsers occasionally report a huge spike right after locking
       if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return;
@@ -31,7 +43,7 @@ export class Input {
       this.dy += e.movementY;
     });
     el.addEventListener('mousedown', (e) => {
-      if (!this.locked) return;
+      if (!this.locked && !this.free) return;
       this.buttons.add(e.button);
       this.downQueue.push(e.button);
       e.preventDefault();
@@ -44,12 +56,13 @@ export class Input {
     el.addEventListener(
       'wheel',
       (e) => {
-        if (!this.locked) return;
+        if (!this.locked && !this.free) return;
         this.wheel += Math.sign(e.deltaY);
         e.preventDefault();
       },
       { passive: false },
     );
+    document.addEventListener('pointerlockerror', () => this.goFree());
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === el;
       this.lockedAt = performance.now();
@@ -59,12 +72,35 @@ export class Input {
   }
 
   requestLock(): void {
+    if (this.free) return;
+    const el = this.el as any;
+    if (!el.requestPointerLock) return this.goFree();
     try {
-      const p = (this.el as any).requestPointerLock?.({ unadjustedMovement: false });
-      if (p && typeof p.catch === 'function') p.catch(() => (this.el as any).requestPointerLock?.());
+      const p = el.requestPointerLock({ unadjustedMovement: false });
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          try {
+            const p2 = el.requestPointerLock();
+            if (p2 && typeof p2.catch === 'function') p2.catch(() => this.goFree());
+          } catch {
+            this.goFree();
+          }
+        });
+      }
     } catch {
-      /* some browsers throw if called too soon after exit */
+      this.goFree();
     }
+    // some embedded frames neither lock nor report an error
+    setTimeout(() => {
+      if (!this.locked && document.pointerLockElement !== this.el) this.goFree();
+    }, 1500);
+  }
+
+  /** Fall back to a visible cursor that aims at controls; drag empty space to look. */
+  goFree(): void {
+    if (this.free) return;
+    this.free = true;
+    this.el.style.cursor = 'crosshair';
   }
 
   exitLock(): void {

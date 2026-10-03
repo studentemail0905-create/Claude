@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "build:single": "npm run build && node scripts/single.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "vite-node scripts/botflight.ts"

@@ -124,3 +124,6 @@ td.bad { color: #e08b7a; }
   .panel-box { padding: 18px 16px; }
   .panel-box h2 { font-size: 28px; }
 }
+
+.flight-hud.free-cursor .reticle { display: none; }
+.flight-hud.free-cursor .tip { top: auto; bottom: 120px; }

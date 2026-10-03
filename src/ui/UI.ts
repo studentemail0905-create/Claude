@@ -106,7 +106,8 @@ export class UI {
     this.reticle.className = 'reticle ' + this.save.data.cosmetics.reticle;
   }
 
-  updateFlight(s: { time: number; pb: number | null; runNo: number; tooltip: string; hovering: boolean; stick: boolean; locked: boolean }): void {
+  updateFlight(s: { time: number; pb: number | null; runNo: number; tooltip: string; hovering: boolean; stick: boolean; locked: boolean; free?: boolean }): void {
+    this.hud.classList.toggle('free-cursor', !!s.free);
     this.timer.textContent = `RUN ${fmtTime(s.time)}   PB ${s.pb !== null ? fmtTime(s.pb) : '--:--.--'}   #${s.runNo}`;
     this.tip.textContent = s.tooltip;
     this.reticle.classList.toggle('hover', s.hovering);
@@ -139,6 +140,7 @@ export class UI {
         <div class="inputs">
           <div><b>MOUSE</b> look · <b>LMB</b> operate / drag levers, knobs, handles · <b>RMB</b> reverse a switch · <b>WHEEL</b> rotate knob / zoom · <b>MMB/Z</b> zoom</div>
           <div><b>STICK</b> click it to take hold, mouse deflects, LMB releases, hold RMB to look · or <b>W A S D</b></div>
+          <div><b>NO POINTER LOCK?</b> the cursor aims at controls; drag empty space to look · <b>P</b> or <b>Esc</b> pauses</div>
           <div><b>Q/E</b> rudder · <b>R/F</b> throttle · <b>B</b> wheel brake · <b>I K J L U O</b> RCS translate · <b>SPACE</b> recentre view</div>
         </div>
       </div>`;
@@ -277,10 +279,14 @@ export class UI {
       else document.documentElement.requestFullscreen?.().catch(() => {});
     });
     el.querySelector('[data-a=wipe]')!.addEventListener('click', () => {
-      if (confirm('Erase all runs, credits and purchases? The Ministry will not be able to restore them.')) {
+      const b = el.querySelector('[data-a=wipe]') as HTMLButtonElement;
+      if (b.dataset.armed === '1') {
         this.save.reset();
         this.on.onSettings();
         this.showSettings(from);
+      } else {
+        b.dataset.armed = '1';
+        b.textContent = 'CLICK AGAIN TO ERASE';
       }
     });
     el.querySelector('[data-a=back]')!.addEventListener('click', () => (this.settingsReturn === 'menu' ? this.showMenu() : this.showPause()));
