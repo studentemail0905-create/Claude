@@ -39,9 +39,11 @@ export class Panel {
     const pw = Math.round(w * this.ppm), ph = Math.round(h * this.ppm);
     this.c = wornMetal(pw, ph, opts.aftermarket ? '#1c1d1e' : paint, opts.wear ?? 1);
     this.g = this.c.getContext('2d')!;
-    [this.ec, this.eg] = canvas(pw, ph);
+    // emissive (backlit legend) map at half resolution — it only needs to glow
+    [this.ec, this.eg] = canvas(Math.ceil(pw / 2), Math.ceil(ph / 2));
     this.eg.fillStyle = '#000';
     this.eg.fillRect(0, 0, pw, ph);
+    this.eg.scale(0.5, 0.5);
     // border + fasteners
     const g = this.g;
     g.strokeStyle = 'rgba(0,0,0,0.6)';

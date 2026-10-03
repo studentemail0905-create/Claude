@@ -28,7 +28,8 @@ if (steps.includes('fly')) {
   await evalg(() => { const g = window.__nc; g.interaction.yaw = 0; g.interaction.pitch = -0.14; });
 }
 if (steps.includes('bot')) {
-  if (!steps.includes('fly')) { await page.click('button[data-a=fly]'); await page.waitForTimeout(2000); await evalg(() => { const g = window.__nc; g.interaction.yaw = 0; g.interaction.pitch = -0.12; }); }
+  if (process.env.SEED) { await page.click('.seed summary'); await page.fill('.seed input', process.env.SEED); await page.click('button[data-a=seedfly]'); await page.waitForTimeout(2000); }
+  else if (!steps.includes('fly')) { await page.click('button[data-a=fly]'); await page.waitForTimeout(2000); await evalg(() => { const g = window.__nc; g.interaction.yaw = 0; g.interaction.pitch = -0.12; }); }
   await evalg((ts) => { const g = window.__nc; g.bot = new window.__BotPilot(g.run); g.timeScale = ts; }, Number(process.env.TS || 1));
   const marks = (process.env.MARKS || '20,45,90,150,240').split(',').map(Number);
   for (const t of marks) {
@@ -41,6 +42,13 @@ if (steps.includes('bot')) {
     await shot(`bot-t${t}-alt${Math.round(st.alt / 1000)}km`);
     if (st.ended) break;
   }
+}
+const endState = await evalg(() => window.__nc?.state);
+if (endState === 'ending' || endState === 'ended') {
+  for (let i = 0; i < 20; i++) { if ((await evalg(() => window.__nc.state)) === 'ended') break; await page.waitForTimeout(500); }
+  await page.waitForTimeout(800);
+  await shot('end-screen');
+  console.log(JSON.stringify(await evalg(() => { const s = window.__nc.run.summary(); return { escaped: s.escaped, failure: s.failure, event: s.event, time: s.time, reward: s.reward?.total, seed: s.seed }; })));
 }
 const info = await evalg(() => window.__nc ? window.__nc.debugInfo : null);
 console.log(JSON.stringify(info));

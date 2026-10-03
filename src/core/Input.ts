@@ -6,6 +6,7 @@ export class Input {
   wheel = 0;
   buttons = new Set<number>();
   locked = false;
+  private lockedAt = 0;
   private downQueue: number[] = [];
   private upQueue: number[] = [];
   private keyQueue: string[] = [];
@@ -23,7 +24,9 @@ export class Input {
       this.buttons.clear();
     });
     el.addEventListener('mousemove', (e) => {
-      if (!this.locked) return;
+      if (!this.locked || performance.now() - this.lockedAt < 120) return;
+      // browsers occasionally report a huge spike right after locking
+      if (Math.abs(e.movementX) > 250 || Math.abs(e.movementY) > 250) return;
       this.dx += e.movementX;
       this.dy += e.movementY;
     });
@@ -49,6 +52,8 @@ export class Input {
     );
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === el;
+      this.lockedAt = performance.now();
+      this.dx = this.dy = 0;
       if (!this.locked) this.buttons.clear();
     });
   }

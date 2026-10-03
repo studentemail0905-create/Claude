@@ -25,7 +25,7 @@ button { font-family: var(--font); cursor: pointer; }
 .authority { font-family: var(--mono); font-size: 12px; letter-spacing: 0.18em; color: var(--amber); }
 
 /* ── screens ── */
-.screen { position: fixed; inset: 0; pointer-events: auto; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, rgba(0,0,0,0.25), rgba(0,0,0,0.75)); overflow: auto; padding: 16px; }
+.screen { position: fixed; inset: 0; pointer-events: auto; display: flex; align-items: safe center; justify-content: safe center; background: radial-gradient(ellipse at center, rgba(0,0,0,0.25), rgba(0,0,0,0.75)); overflow: auto; padding: 16px; }
 .screen-menu { background: linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0) 100%); justify-content: flex-start; }
 .menu-wrap { margin-left: 7vw; max-width: 560px; }
 .title { font-size: clamp(48px, 9vw, 112px); margin: 8px 0 4px; font-weight: 900; letter-spacing: 0.04em; line-height: 0.9; color: #f1ead6; text-shadow: 0 2px 0 #000, 0 0 40px rgba(0,0,0,0.6); }
@@ -47,7 +47,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .seed button { background: #1b1c1d; color: var(--ink); border: 1px solid #555; padding: 6px 12px; }
 .footer { margin-top: 42px; font-family: var(--mono); font-size: 11px; color: #6b6656; letter-spacing: 0.12em; }
 
-.panel-box { background: var(--panel); border: 2px solid #3d3c37; box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0,0,0,0.6); padding: 28px 34px; max-width: 860px; width: 100%; position: relative; }
+.panel-box { margin: auto; background: var(--panel); border: 2px solid #3d3c37; box-shadow: 0 0 0 1px #000, 0 20px 60px rgba(0,0,0,0.6); padding: 28px 34px; max-width: 860px; width: 100%; position: relative; }
 .panel-box h2 { margin: 0 0 6px; font-size: 38px; letter-spacing: 0.06em; }
 .panel-box h3 { margin: 18px 0 8px; font-size: 14px; letter-spacing: 0.2em; color: var(--amber); }
 .sub-title { color: var(--dim); margin-bottom: 18px; }

@@ -47,8 +47,11 @@ export function updateZones(t: ZoneTracker, zin: ZoneInputs, dt: number): void {
     if (t.held[i] >= ZONE_HOLD) t.banked[i] = true;
   }
   t.best = Math.max(t.best, z);
-  const next = Math.min(7, z + 1);
-  t.nextProgress = next <= 5 ? Math.min(1, zin.altitude / ZONE_ALT[next]) : z >= next ? 1 : 0.5;
+  // commitment toward the zone after the best one reached; a decaying peak so a
+  // strong push that ends in a crash still counts, but loitering does not
+  const next = Math.min(7, t.best + 1);
+  const now = next <= 5 ? Math.min(1, Math.max(0, zin.altitude) / ZONE_ALT[next]) : next === 6 ? (zin.aligned && zin.solution ? 0.9 : 0.5) : Math.min(1, zin.chargeFrac);
+  t.nextProgress = Math.max(now, t.nextProgress * Math.exp(-dt / 12));
 }
 
 export interface RewardInput {
